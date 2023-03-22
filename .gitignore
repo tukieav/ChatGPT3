@@ -1,0 +1,23 @@
+# Zależności
+/node_modules
+
+# Katalogi środowiska
+/.env
+
+# Katalogi budowy
+/dist
+
+# Pliki cache
+.npm
+.cache
+
+# Pliki dziennika
+*.log
+
+# Edytory
+.vscode
+.idea
+
+# Śmieci systemowe
+.DS_Store
+Thumbs.db
