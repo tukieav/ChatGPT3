@@ -49,4 +49,31 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
+  async function fetchUser() {
+  const response = await fetch('/api/user');
+  const data = await response.json();
+  return data.user;
+}
+
+function updateUserUI(user) {
+  // Tutaj możesz zaktualizować interfejs użytkownika na podstawie stanu logowania
+  if (user) {
+    console.log(`User is logged in: ${user.displayName}`);
+  } else {
+    console.log('User is not logged in');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Pobierz dane o użytkowniku i zaktualizuj interfejs użytkownika
+  const user = await fetchUser();
+  updateUserUI(user);
+});
+  const logoutButton = document.getElementById('logout');
+
+logoutButton.addEventListener('click', async () => {
+  await fetch('/logout');
+  const user = await fetchUser();
+  updateUserUI(user);
+});
 });
