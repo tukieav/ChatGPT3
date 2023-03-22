@@ -1,0 +1,37 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.chat-messages {
+    max-height: 60vh;
+    min-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    padding: 0.5rem;
+}
+
+.chat-message {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+    max-width: 75%;
+    word-wrap: break-word;
+}
+
+.chat-message.user {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+    border-top-right-radius: 0;
+}
+
+.chat-message.gpt3 {
+    background-color: #e9ecef;
+    color: #495057;
+    margin-right: auto;
+    border-top-left-radius: 0;
+}
