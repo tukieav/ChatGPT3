@@ -1,3 +1,7 @@
+require('dotenv').config();
+
 module.exports = {
-  openaiApiKey: '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'
+  googleClientId: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  openaiApiKey: process.env.OPENAI_API_KEY
 };

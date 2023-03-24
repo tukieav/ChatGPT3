@@ -1,60 +1,34 @@
 const express = require('express');
 const path = require('path');
-const api = require('./api');
-const cors = require('cors');
-const session = require('express-session');
+const bodyParser = require('body-parser');
 const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const session = require('express-session');
+const api = require('./api');
+const authController = require('./authController');
+
+const mongoose = require('mongoose');
+const {Strategy: GoogleStrategy} = require("passport-google-oauth20");
+mongoose.connect('mongodb://localhost:27017', { useNewUrlParser: true, useUnifiedTopology: true });
 
 const app = express();
-const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
   secret: 'your-session-secret',
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: false
 }));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.use(new GoogleStrategy({
-    clientID: ',,,',
-    clientSecret: ',,,',
-    callbackURL: 'http://localhost:3000/auth/google/callback',
-  },
-  (accessToken, refreshToken, profile, done) => {
-    return done(null, profile);
-  })
-);
-
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/login' }),
-  (req, res) => {
-    res.redirect('/');
-  });
-
-app.get('/logout', (req, res) => {
-  req.logout();
-  res.redirect('/login');
-});
-
-app.use('/api', ensureAuthenticated, api);
+passport.use(authController.LocalStrategy);
+passport.use(authController.GooglePassportStrategy);
+passport.serializeUser(authController.serializeUser);
+passport.deserializeUser(authController.deserializeUser);
 
 function ensureAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
@@ -63,10 +37,27 @@ function ensureAuthenticated(req, res, next) {
   res.redirect('/login');
 }
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
+app.use('/api', api);
+
+app.get('/', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.post('/login', passport.authenticate('local', { failureRedirect: '/login' }), (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/logout', (req, res) => {
+  req.logout();
+  res.redirect('/login');
+});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
 });
