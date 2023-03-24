@@ -6,9 +6,6 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -20,7 +17,6 @@ app.use(session({
   secret: 'your-session-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 24 * 60 * 60 * 1000 } // 1 day
 }));
 
 app.use(passport.initialize());
@@ -35,36 +31,37 @@ passport.deserializeUser((user, done) => {
 });
 
 passport.use(new GoogleStrategy({
-    clientID: GOOGLE_CLIENT_ID,
-    clientSecret: GOOGLE_CLIENT_SECRET,
-    callbackURL: '/auth/google/callback'
+    clientID: '693207663415-rmir0f0vo1k24r74c339aggvjq62tvat.apps.googleusercontent.com',
+    clientSecret: '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',
+    callbackURL: 'http://localhost:3000/auth/google/callback',
   },
   (accessToken, refreshToken, profile, done) => {
-    // Tutaj możesz przetworzyć profil użytkownika
-    done(null, profile);
-  }
-));
+    return done(null, profile);
+  })
+);
 
-app.use('/api', api);
+app.get('/auth/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
-  res.redirect('/');
-});
-
-app.get('/user', (req, res) => {
-  if (req.user) {
-    res.json(req.user);
-  } else {
-    res.status(401).json({ error: 'Not authenticated' });
-  }
-});
+app.get('/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    res.redirect('/');
+  });
 
 app.get('/logout', (req, res) => {
   req.logout();
-  res.redirect('/');
+  res.redirect('/login');
 });
+
+app.use('/api', ensureAuthenticated, api);
+
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/index.html'));

@@ -1,12 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const loginContainer = document.getElementById('login-container');
+  const chatContainer = document.getElementById('chat-container');
   const messageForm = document.getElementById('message-form');
   const messageInput = document.getElementById('message-input');
   const contextInput = document.getElementById('context-input');
   const chatMessages = document.getElementById('chat-messages');
-  const temperatureInput = document.getElementById('temperature-input');
-  const topPInput = document.getElementById('top_p-input');
-  const frequencyPenaltyInput = document.getElementById('frequency_penalty-input');
-  const presencePenaltyInput = document.getElementById('presence_penalty-input');
+
+  checkUserLoggedIn();
+
+  async function checkUserLoggedIn() {
+    const response = await fetch('/api/user');
+    if (response.ok) {
+      loginContainer.style.display = 'none';
+      chatContainer.style.display = 'block';
+    } else {
+      loginContainer.style.display = 'block';
+      chatContainer.style.display = 'none';
+    }
+  }
 
   messageForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -20,22 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
     messageInput.value = '';
 
     const context = contextInput.value.trim();
-    const temperature = parseFloat(temperatureInput.value) || 0.9;
-    const topP = parseFloat(topPInput.value) || 1;
-    const frequencyPenalty = parseFloat(frequencyPenaltyInput.value) || 0;
-    const presencePenalty = parseFloat(presencePenaltyInput.value) || 0;
-
-    const gpt3Response = await fetchGpt3Response(userMessage, context, temperature, topP, frequencyPenalty, presencePenalty);
+    const gpt3Response = await fetchGpt3Response(userMessage, context);
     addMessageToChat('gpt3', gpt3Response);
   });
 
-  async function fetchGpt3Response(userMessage, context, temperature, topP, frequencyPenalty, presencePenalty) {
+  async function fetchGpt3Response(userMessage, context) {
     const response = await fetch('/api/gpt3', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ input: userMessage, context: context, temperature: temperature, top_p: topP, frequency_penalty: frequencyPenalty, presence_penalty: presencePenalty })
+      body: JSON.stringify({ input: userMessage, context: context })
     });
 
     const data = await response.json();
@@ -49,31 +55,4 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
-  async function fetchUser() {
-  const response = await fetch('/api/user');
-  const data = await response.json();
-  return data.user;
-}
-
-function updateUserUI(user) {
-  // Tutaj możesz zaktualizować interfejs użytkownika na podstawie stanu logowania
-  if (user) {
-    console.log(`User is logged in: ${user.displayName}`);
-  } else {
-    console.log('User is not logged in');
-  }
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-  // Pobierz dane o użytkowniku i zaktualizuj interfejs użytkownika
-  const user = await fetchUser();
-  updateUserUI(user);
-});
-  const logoutButton = document.getElementById('logout');
-
-logoutButton.addEventListener('click', async () => {
-  await fetch('/logout');
-  const user = await fetchUser();
-  updateUserUI(user);
-});
 });
