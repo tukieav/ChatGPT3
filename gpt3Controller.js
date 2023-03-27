@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { OPENAI_API_KEY } = require('./config');
+const { openaiApiKey, openAiModel } = require('./config');
 
 const generateResponse = async (req, res) => {
   const { input, context } = req.body;
@@ -7,7 +7,7 @@ const generateResponse = async (req, res) => {
 
   try {
     const response = await axios.post(
-      'https://api.openai.com/v1/engines/davinci-codex/completions',
+      openAiModel,
       {
         prompt: prompt,
         max_tokens: 150,
@@ -18,7 +18,7 @@ const generateResponse = async (req, res) => {
       {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Authorization': `Bearer ${openaiApiKey}`,
         },
       }
     );

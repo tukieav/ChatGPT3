@@ -4,11 +4,11 @@ const bodyParser = require('body-parser');
 const passport = require('passport');
 const session = require('express-session');
 const api = require('./api');
-const authController = require('./authController');
+const { authController, GoogleStrategy, serializeUser, deserializeUser } = require('./authController');
+const { mongodbPath, mongodbDatabase } = require('./config');
 
 const mongoose = require('mongoose');
-const {Strategy: GoogleStrategy} = require("passport-google-oauth20");
-mongoose.connect('mongodb://localhost:27017', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(mongodbPath+'/'+mongodbDatabase , { useNewUrlParser: true, useUnifiedTopology: true });
 
 const app = express();
 
@@ -25,8 +25,7 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(authController.LocalStrategy);
-passport.use(authController.GooglePassportStrategy);
+passport.use(authController.GoogleStrategy);
 passport.serializeUser(authController.serializeUser);
 passport.deserializeUser(authController.deserializeUser);
 
