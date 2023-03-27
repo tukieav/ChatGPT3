@@ -1,26 +1,51 @@
 const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema({
+
+const userSchema = new mongoose.Schema({
   googleId: {
     type: String,
     unique: true
   },
-  displayName: {
-    type: String,
-    required: true
-  }
-  // dodaj inne pola, jeśli są potrzebne
+  displayName: String
 });
+const strategy = new GoogleStrategy(
+  {
+    clientID: googleClientId,
+    clientSecret: googleClientSecret,
+    callbackURL: googleCallbackURL
+  },
+  async function (accessToken, refreshToken, profile, done) {
+    if (!profile.id) {
+      return done(new Error('Profile ID is null'));
+    }
 
-UserSchema.statics.findOrCreate = async function (conditions, doc) {
-  const user = await this.findOne(conditions);
-  if (user) {
-    return user;
-  } else {
-    return this.create(doc);
+    try {
+      const user = await User.findOrCreate(
+        { googleId: profile.id },
+        { displayName: profile.displayName }
+      );
+      done(null, user);
+    } catch (err) {
+      done(err);
+    }
   }
+);
+
+userSchema.statics.findOrCreate = async function (condition, doc) {
+  if (condition.googleId === null) {
+    throw new Error('Cannot find or create user with null googleId');
+  }
+
+  const existingUser = await this.findOne(condition);
+  if (existingUser) {
+    return existingUser;
+  }
+
+  const newUser = new this(doc);
+  await newUser.save();
+  return newUser;
 };
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;

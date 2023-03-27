@@ -5,19 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageInput = document.getElementById('message-input');
   const contextInput = document.getElementById('context-input');
   const chatMessages = document.getElementById('chat-messages');
+  const logoutLink = document.querySelector('a[href="/logout"]');
 
-  checkUserLoggedIn();
-
-  async function checkUserLoggedIn() {
-    const response = await fetch('/api/user');
-    if (response.ok) {
-      loginContainer.style.display = 'none';
-      chatContainer.style.display = 'block';
-    } else {
-      loginContainer.style.display = 'block';
-      chatContainer.style.display = 'none';
-    }
+async function checkUserLoggedIn() {
+  const response = await fetch('/api/user');
+  if (response.ok) {
+    loginContainer.style.display = 'none';
+    chatContainer.style.display = 'block';
+  } else {
+    loginContainer.style.display = 'block';
+    chatContainer.style.display = 'none';
   }
+}
 
   messageForm.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -55,4 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
+
+  logoutLink.addEventListener('click', async (event) => {
+  event.preventDefault();
+  const response = await fetch('/logout');
+  if (response.ok) {
+    checkUserLoggedIn();
+  }
+});
+
 });
