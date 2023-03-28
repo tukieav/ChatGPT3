@@ -1,44 +1,54 @@
 const express = require('express');
-const session = require('express-session');
-const passport = require('passport');
 const mongoose = require('mongoose');
-const apiRoutes = require('./apiRoutes');
+const passport = require('passport');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+
+const authController = require('./authController');
 const authRoutes = require('./authRoutes');
-const { mongodbPath, mongodbDatabase } = require('./config');
-const { strategy: GoogleStrategy, serializeUser, deserializeUser } = require('./authController');
+const apiRoutes = require('./apiRoutes');
+const config = require('./config');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Connect to MongoDB
-mongoose.connect(`${mongodbPath}${mongodbDatabase}`, {
+mongoose.connect(config.mongoUrl, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 });
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
-app.use(session({
-  secret: 'some-random-secret-key',
-  resave: false,
-  saveUninitialized: false
-}));
+const sessionStore = new MongoStore({
+  mongooseConnection: mongoose.connection,
+  collection: 'sessions',
+});
+
+app.use(
+  session({
+    secret: 'your-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+    cookie: {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    },
+  })
+);
+
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(GoogleStrategy);
-passport.serializeUser(serializeUser);
-passport.deserializeUser(deserializeUser);
+passport.use(authController.googleStrategy);
+passport.serializeUser(authController.serializeUser);
+passport.deserializeUser(authController.deserializeUser);
 
-// Routes
-app.use('/api', apiRoutes);
 app.use('/auth', authRoutes);
+app.use('/api', apiRoutes);
+
+app.use(express.static('public'));
+
 app.get('*', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(3001, () => {
+  console.log('Server is running on port 3001');
 });
