@@ -1,43 +1,49 @@
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const passport = require('passport');
 const User = require('./userModel');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { googleClientId, googleClientSecret, googleCallbackURL } = require('./config');
-
-const strategy = new GoogleStrategy(
-  {
-    clientID: googleClientId,
-    clientSecret: googleClientSecret,
-    callbackURL: googleCallbackURL
-  },
-  async function (accessToken, refreshToken, profile, done) {
-    try {
-      const user = await User.findOrCreate(
-        { googleId: profile.id },
-        { displayName: profile.displayName }
-      );
-      done(null, user);
-    } catch (err) {
-      done(err);
-    }
-  }
-);
 
 const serializeUser = (user, done) => {
   done(null, user.id);
 };
 
 const deserializeUser = async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err);
-  }
+  const user = await User.findById(id);
+  done(null, user);
 };
 
-module.exports = {
-  authController: {
-    GoogleStrategy: strategy,
-    serializeUser,
-    deserializeUser
+const googleStrategy = new GoogleStrategy(
+  {
+    clientID: googleClientId,
+    clientSecret: googleClientSecret,
+    callbackURL: googleCallbackURL,
+    proxy: true,
+  },
+  async (accessToken, refreshToken, profile, done) => {
+    try {
+      // Wyszukaj istniejącego użytkownika
+      const existingUser = await User.findOne({ googleId: profile.id });
+
+      if (existingUser) {
+        // Jeśli użytkownik już istnieje, zwróć go
+        return done(null, existingUser);
+      }
+
+      // Jeśli nie, utwórz nowego użytkownika z googleId
+      const newUser = await new User({
+        googleId: profile.id,
+        // ... inne dane ...
+      }).save();
+
+      return done(null, newUser);
+    } catch (err) {
+      done(err, null);
+    }
   }
+);
+
+module.exports = {
+  googleStrategy,
+  serializeUser,
+  deserializeUser,
 };

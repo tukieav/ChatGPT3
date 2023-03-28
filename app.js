@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const apiRoutes = require('./apiRoutes');
 const authRoutes = require('./authRoutes');
 const { mongodbPath, mongodbDatabase } = require('./config');
-const { authController } = require('./authController');
+const { strategy: GoogleStrategy, serializeUser, deserializeUser } = require('./authController');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,9 +28,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(authController.GoogleStrategy);
-passport.serializeUser(authController.serializeUser);
-passport.deserializeUser(authController.deserializeUser);
+passport.use(GoogleStrategy);
+passport.serializeUser(serializeUser);
+passport.deserializeUser(deserializeUser);
 
 // Routes
 app.use('/api', apiRoutes);
